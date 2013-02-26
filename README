@@ -2,7 +2,7 @@ NAME
     rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 VERSION
-    version 0.5
+    version 0.6
 
 SYNOPSIS
      rainbarf --tmux --width 40 --no-battery
@@ -45,6 +45,17 @@ USAGE
 
     Reload the tmux config by running "tmux source-file ~/.tmux.conf".
 
+CONFIGURATION FILE
+    "~/.rainbarf.conf" can be used to persistently store "OPTIONS":
+
+     # example configuration file
+     width=20   # widget width
+     bolt       # fancy charging character
+     remaining  # display remaining battery
+     rgb        # 256-colored palette
+
+    "OPTIONS" specified via command line override that values.
+
 OPTIONS
     --help
         This.
@@ -61,6 +72,10 @@ OPTIONS
 
     --[no]bright
         Tricky one. Disabled by default. See "CAVEAT".
+
+    --[no]rgb
+        Use the RGB palette instead of the system colors. Also disabled by
+        default, for the same reasons as above.
 
     --fg COLOR_NAME
         Force chart foreground color.
@@ -109,7 +124,7 @@ CAVEAT
     between foreground and background colors. For instance, "red on red
     background" will be displayed as a red block on such terminals. Thus,
     you may need the ANSI bright attribute for greater contrast. There are
-    two problems with it, though:
+    two issues with it, though:
 
     1.  Other color schemes (notably, solarized
         <http://ethanschoonover.com/solarized>) have different meaning for
@@ -123,6 +138,10 @@ CAVEAT
         "OPTIONS" via command line before actually editing the ~/.tmux.conf.
         That is, "rainbarf --bright --tmux" is guaranteed to work despite
         the outdated Term::ANSIColor!
+
+    Another option is skipping the system colors altogether and use the RGB
+    palette ("rainbarf --rgb"). This fixes the *issue 1*, but doesn't affect
+    the *issue 2*. It still looks better, though.
 
   Persistent storage
     CPU utilization stats are persistently stored in the ~/.rainbarf.dat

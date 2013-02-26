@@ -1,23 +1,50 @@
 #!/usr/bin/env perl
+# vim:fenc=utf-8:ft=perl:et:sw=4:ts=4:sts=4:fdm=syntax:fdl=0
 use 5.008;
 use strict;
-use utf8;
 use warnings qw(all);
 
 use List::Util qw(max sum);
 use Storable qw(lock_retrieve lock_store);
 
 ## no critic (ProhibitBacktickOperators ProhibitComplexRegexes ProhibitInteractiveTest)
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 
-my @ticks = qw[▁ ▂ ▃ ▄ ▅ ▆ ▇ █];
+my %rgb = (
+    black   => [qw[0 0 0]],
+    red     => [qw[1 0 0]],
+    green   => [qw[0 1 0]],
+    yellow  => [qw[1 1 0]],
+    blue    => [qw[0 0 1]],
+    magenta => [qw[1 0 1]],
+    cyan    => [qw[0 1 1]],
+    white   => [qw[1 1 1]],
+);
+
+my @ticks = map { chr 0x2580 + $_ } 1 .. 8;
 binmode \*STDOUT => q(encoding(utf8));
 
 my $order   = '';
 my $screen  = 0;
 my $tmux    = not -t \*STDOUT;
+my $rgb     = 0;
 
-my ($help, $show_battery, $remaining, $bolt, $chart_bg, $chart_fg, $bright, $loadavg, $threshold, $width);
+my ($help, $show_battery, $remaining, $bolt, $chart_bg,
+    $chart_fg, $bright, $loadavg, $threshold, $width);
+
+# parse the options file
+my $rcname = qq($ENV{HOME}/.rainbarf.conf);
+if (open(my $rcfile, q(<), $rcname)) {
+    while (<$rcfile>) {
+        s/\#.*$//x;
+        s/\s+//gx;
+        if (/^(?:\-{2})?(\w+(?:=\w+)?)$/x) {
+            unshift @ARGV => q(--) . $1;
+        }
+    }
+    close $rcfile;
+}
+
 if (@ARGV) {
     require Getopt::Long;
     Getopt::Long::GetOptions(
@@ -33,6 +60,7 @@ if (@ARGV) {
         q(order=s)      => \$order,
         q(screen)       => \$screen,
         q(tmux!)        => \$tmux,
+        q(rgb!)         => \$rgb,
         q(width=i)      => \$width,
     ) or help(-verbose => 1);
 }
@@ -89,13 +117,7 @@ for my $type (sort { $colors{$a}->[1] <=> $colors{$b}->[1] } keys %memory) {
 print $ticks[$norm * $cpu] if $c < $width;
 
 battery() if $show_battery;
-
-if ($screen) {
-    print qq(\5{= dd});
-} elsif ($tmux) {
-} else {
-    print Term::ANSIColor::color(q(reset)) => qq(\n);
-}
+my_reset(1);
 
 # For dependencies linting
 #printf qq(%-20s\t%s\n), $_ => $INC{$_} for sort keys %INC;
@@ -113,17 +135,30 @@ sub defaults {
     $threshold      = 1     unless defined $threshold;
     $width          = 38    unless defined $width;
     $bright         = 0     unless defined $bright;
-    $bolt           = (defined $bolt and $bolt) ? q(⚡) : q(|);
+    $bolt           = (defined $bolt and $bolt) ? chr 0x26a1 : q(|);
     require Term::ANSIColor if not $tmux and not $screen;
 
     return;
+}
+
+sub color_idx {
+    my ($color, $brightness) = @_;
+    return unless defined $color;
+    my ($r, $g, $b) = map { $_ * $brightness } @{$rgb{$color}};
+    return q(colour) . (16 + (6 * 6 * $r) + (6 * $g) + $b);
+}
+
+sub color_rgb {
+    my ($color, $brightness) = @_;
+    return unless defined $color;
+    return q(rgb) . join '' => map { $_ * $brightness } @{$rgb{$color}};
 }
 
 sub my_color {
     my ($fg, $bg) = @_;
     my $out;
 
-   if ($screen) {
+    if ($screen) {
         $out = qq(\5{);
         $out .= defined($bg)
             ? chr ord $bg
@@ -133,15 +168,37 @@ sub my_color {
             : chr ord $fg;
         $out .= q(});
     } elsif ($tmux) {
-        $fg .= q(,bright) if $bright;
-        $out = qq(#[fg=$fg]);
-        $out .= qq(#[bg=$bg]) if defined $bg;
+        if ($rgb) {
+            $fg = color_idx($fg => 5);
+            $bg = color_idx($bg => 2);
+        } else {
+            $fg .= q(,bright) if $bright;
+        }
+        $out = defined($bg) ? qq(#[fg=$fg,bg=$bg]) : qq(#[fg=$fg]);
     } else {
-        $fg = qq(bright_$fg) if $bright;
+        if ($rgb) {
+            $fg = color_rgb($fg => 5);
+            $bg = color_rgb($bg => 2);
+        } else {
+            $fg = qq(bright_$fg) if $bright;
+        }
         $out = Term::ANSIColor::color(defined($bg) ? qq($fg on_$bg) : $fg);
     }
 
     return $out;
+}
+
+sub my_reset {
+    my ($eof) = @_;
+    if ($screen) {
+        print qq(\5{= dd});
+    } elsif ($tmux) {
+        print q(#[fg=default,bg=default]);
+    } else {
+        print Term::ANSIColor::color(q(reset));
+    }
+    print qq(\n) if defined $eof;
+    return;
 }
 
 sub top {
@@ -290,13 +347,30 @@ sub battery {
 sub battery_print {
     my ($battery, $charging, $time) = @_;
     if (defined $battery) {
-        print my_color(($charging ? q(green) : q(red)), q(black)) => $bolt;
-        if ($battery < 0.333) {
-            print my_color(q(red));
-        } elsif ($battery < 0.666) {
-            print my_color(q(yellow));
+        my_reset();
+        print my_color(($charging ? q(green) : q(red))) => $bolt;
+        if ($rgb and not $screen) {
+            my @color;
+            if ($battery > 0.5) {
+                # green => yellow
+                @color = (int((1 - $battery) * 12), 5, 0);
+            } else {
+                # yellow => red
+                @color = (5, int($battery * 12), 0);
+            }
+            if ($tmux) {
+                print q(#[fg=colour) . (16 + (6 * 6 * $color[0]) + (6 * $color[1]) + $color[2]) . q(]);
+            } else {
+                print Term::ANSIColor::color(q(rgb) . join '' => @color);
+            }
         } else {
-            print my_color(q(green));
+            if ($battery < 0.333) {
+                print my_color(q(red));
+            } elsif ($battery < 0.666) {
+                print my_color(q(yellow));
+            } else {
+                print my_color(q(green));
+            }
         }
         print $ticks[$#ticks * $battery];
     }
@@ -316,7 +390,7 @@ rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 =head1 VERSION
 
-version 0.5
+version 0.6
 
 =head1 SYNOPSIS
 
@@ -365,6 +439,18 @@ Or, under I<GNOME Terminal>:
 
 Reload the tmux config by running C<tmux source-file ~/.tmux.conf>.
 
+=head1 CONFIGURATION FILE
+
+C<~/.rainbarf.conf> can be used to persistently store L</OPTIONS>:
+
+ # example configuration file
+ width=20   # widget width
+ bolt       # fancy charging character
+ remaining  # display remaining battery
+ rgb        # 256-colored palette
+
+L</OPTIONS> specified via command line override that values.
+
 =head1 OPTIONS
 
 =over 4
@@ -388,6 +474,11 @@ Display even fancier battery indicator.
 =item --[no]bright
 
 Tricky one. Disabled by default. See L</CAVEAT>.
+
+=item --[no]rgb
+
+Use the B<RGB> palette instead of the system colors.
+Also disabled by default, for the same reasons as above.
 
 =item --fg COLOR_NAME
 
@@ -438,7 +529,7 @@ If the C<--remaining> option is present but you do not see the time in your stat
 If you only see the memory usage bars but no CPU utilization chart, that's because your terminal's color scheme need an explicit distinction between foreground and background colors.
 For instance, "red on red background" will be displayed as a red block on such terminals.
 Thus, you may need the ANSI B<bright> attribute for greater contrast.
-There are two problems with it, though:
+There are two issues with it, though:
 
 =over 4
 
@@ -454,6 +545,10 @@ However, the whole L<Term::ANSIColor> is optional, it is only required to previe
 That is, C<rainbarf --bright --tmux> B<is guaranteed to work> despite the outdated L<Term::ANSIColor>!
 
 =back
+
+Another option is skipping the system colors altogether and use the B<RGB> palette (C<rainbarf --rgb>).
+This fixes the I<issue 1>, but doesn't affect the I<issue 2>.
+It still looks better, though.
 
 =head2 Persistent storage
 
