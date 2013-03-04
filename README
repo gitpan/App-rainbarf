@@ -2,7 +2,7 @@ NAME
     rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 VERSION
-    version 0.6
+    version 0.7
 
 SYNOPSIS
      rainbarf --tmux --width 40 --no-battery
@@ -19,9 +19,9 @@ DESCRIPTION
 
     *   blue: inactive memory;
 
-    *   red: wired memory on *Mac OS X*;
+    *   red: wired memory on *Mac OS X* / *FreeBSD*;
 
-    *   cyan: cached memory on *Linux*.
+    *   cyan: cached memory on *Linux*, buf on *FreeBSD*.
 
     If available, battery charge is displayed on the right.
 
@@ -188,6 +188,8 @@ CONTRIBUTORS
     *   Clemens Hammacher <https://github.com/hammacher>
 
     *   Joe Hassick <https://github.com/jh3>
+
+    *   Tom Cammann <https://github.com/takac>
 
     *   Tuomas Jormola <https://github.com/tjormola>
 

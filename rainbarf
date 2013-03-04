@@ -8,7 +8,7 @@ use List::Util qw(max sum);
 use Storable qw(lock_retrieve lock_store);
 
 ## no critic (ProhibitBacktickOperators ProhibitComplexRegexes ProhibitInteractiveTest)
-our $VERSION = 0.6;
+our $VERSION = 0.7;
 
 my %rgb = (
     black   => [qw[0 0 0]],
@@ -88,6 +88,7 @@ my %colors = (
     a   => [ yellow => 3 ], # active
     i   => [ blue   => 4 ], # inactive
     c   => [ cyan   => 5 ], # cached
+    b   => [ cyan   => 5 ], # buf (FreeBSD)
 );
 
 # Custom ordering
@@ -116,7 +117,7 @@ for my $type (sort { $colors{$a}->[1] <=> $colors{$b}->[1] } keys %memory) {
 }
 print $ticks[$norm * $cpu] if $c < $width;
 
-battery() if $show_battery;
+battery() if $show_battery or $remaining;
 my_reset(1);
 
 # For dependencies linting
@@ -135,6 +136,7 @@ sub defaults {
     $threshold      = 1     unless defined $threshold;
     $width          = 38    unless defined $width;
     $bright         = 0     unless defined $bright;
+    $remaining      = 0     unless defined $remaining;
     $bolt           = (defined $bolt and $bolt) ? chr 0x26a1 : q(|);
     require Term::ANSIColor if not $tmux and not $screen;
 
@@ -203,12 +205,20 @@ sub my_reset {
 
 sub top {
     if (not %top and -x q{/usr/bin/top}) {
-        for (qx{/usr/bin/top -R -F -l1 -n0 -s0}) {
+        my @top;
+        if ($^O eq q(darwin)) {
+            @top = qx{/usr/bin/top -R -F -l1 -n0 -s0};
+        } elsif ($^O eq q(freebsd)) {
+            @top = qx{/usr/bin/top -b -d2 -I -s1 -z};
+        }
+        for (@top) {
             my ($key, $value) = /^([\w\s]+)\s*:\s*(.+)/x;
             next unless defined $key;
             $key =~ y/A-Z /a-z_/;
             $top{$key} = $value;
         }
+        $top{cpu_usage} = delete $top{cpu} unless exists $top{cpu_usage};
+        $top{physmem}   = delete $top{mem} unless exists $top{physmem};
     }
     return scalar keys %top;
 }
@@ -270,7 +280,7 @@ sub memory {
     if (exists $top{physmem}) {
         my %n = (K => 1/2**10, M => 1, G => 2**10);
         %m =
-            map { $_->[2] => $_->[0] * $n{$_->[1]} }
+            map { lc $_->[2] => $_->[0] * $n{$_->[1]} }
             map { [(/(\d+)([KMG])\s+(\w)/x)] }
             split /\s*,\s*/x, $top{physmem};
         delete $m{u};
@@ -348,35 +358,38 @@ sub battery_print {
     my ($battery, $charging, $time) = @_;
     if (defined $battery) {
         my_reset();
-        print my_color(($charging ? q(green) : q(red))) => $bolt;
-        if ($rgb and not $screen) {
-            my @color;
-            if ($battery > 0.5) {
-                # green => yellow
-                @color = (int((1 - $battery) * 12), 5, 0);
+        print my_color(($charging ? q(green) : q(red)));
+        if ($show_battery) {
+            print $bolt;
+            if ($rgb and not $screen) {
+                my @color;
+                if ($battery > 0.5) {
+                    # green => yellow
+                    @color = (int((1 - $battery) * 12), 5, 0);
+                } else {
+                    # yellow => red
+                    @color = (5, int($battery * 12), 0);
+                }
+                if ($tmux) {
+                    print q(#[fg=colour) . (16 + (6 * 6 * $color[0]) + (6 * $color[1]) + $color[2]) . q(]);
+                } else {
+                    print Term::ANSIColor::color(q(rgb) . join '' => @color);
+                }
             } else {
-                # yellow => red
-                @color = (5, int($battery * 12), 0);
+                if ($battery < 0.333) {
+                    print my_color(q(red));
+                } elsif ($battery < 0.666) {
+                    print my_color(q(yellow));
+                } else {
+                    print my_color(q(green));
+                }
             }
-            if ($tmux) {
-                print q(#[fg=colour) . (16 + (6 * 6 * $color[0]) + (6 * $color[1]) + $color[2]) . q(]);
-            } else {
-                print Term::ANSIColor::color(q(rgb) . join '' => @color);
-            }
-        } else {
-            if ($battery < 0.333) {
-                print my_color(q(red));
-            } elsif ($battery < 0.666) {
-                print my_color(q(yellow));
-            } else {
-                print my_color(q(green));
-            }
+            print $ticks[$#ticks * $battery];
         }
-        print $ticks[$#ticks * $battery];
     }
-    if (defined $remaining && defined $time) {
+    if ($remaining and defined $time) {
         my $sec = $time * 60;
-        print " " . (($sec/(60*60))%24) . "h" . (($sec/60)%60) . "m ";
+        print q( ) . (($sec / (60 * 60)) % 24) . q(h) . (($sec / 60) % 60) . q(m);
     }
     return;
 }
@@ -390,7 +403,7 @@ rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 =head1 VERSION
 
-version 0.6
+version 0.7
 
 =head1 SYNOPSIS
 
@@ -409,9 +422,9 @@ The CPU utilization history chart is tinted with the following colors to reflect
 
 =item * B<blue>: inactive memory;
 
-=item * B<red>: wired memory on I<Mac OS X>;
+=item * B<red>: wired memory on I<Mac OS X> / I<FreeBSD>;
 
-=item * B<cyan>: cached memory on I<Linux>.
+=item * B<cyan>: cached memory on I<Linux>, buf on I<FreeBSD>.
 
 =back
 
@@ -608,6 +621,10 @@ L<Clemens Hammacher|https://github.com/hammacher>
 =item *
 
 L<Joe Hassick|https://github.com/jh3>
+
+=item *
+
+L<Tom Cammann|https://github.com/takac>
 
 =item *
 
