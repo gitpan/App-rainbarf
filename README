@@ -2,7 +2,7 @@ NAME
     rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 VERSION
-    version 0.7
+    version 0.8
 
 SYNOPSIS
      rainbarf --tmux --width 40 --no-battery
@@ -30,18 +30,34 @@ DESCRIPTION
 
 USAGE
   Installation
-     perl Build.PL
-     ./Build test
-     ./Build install
+    *   Traditional way:
+
+         perl Build.PL
+         ./Build test
+         ./Build install
+
+    *   MacPorts <http://www.macports.org/> way:
+
+         port install rainbarf
+
+    *   CPAN way:
+
+         cpan -i App::rainbarf
+
+    *   Modern Perl way:
+
+         cpanm git://github.com/creaktive/rainbarf.git
 
   Configuration
     Add the following line to your ~/.tmux.conf file:
 
+     set-option -g status-utf8 on
      set -g status-right '#(rainbarf)'
 
     Or, under *GNOME Terminal*:
 
-     set -g status-right '#(rainbarf --bright)'
+     set-option -g status-utf8 on
+     set -g status-right '#(rainbarf --rgb)'
 
     Reload the tmux config by running "tmux source-file ~/.tmux.conf".
 
@@ -54,7 +70,10 @@ CONFIGURATION FILE
      remaining  # display remaining battery
      rgb        # 256-colored palette
 
-    "OPTIONS" specified via command line override that values.
+    "OPTIONS" specified via command line override that values. Configuration
+    file can be specified via "RAINBARF" environment variable:
+
+     RAINBARF=~/.rainbarf.conf rainbarf
 
 OPTIONS
     --help

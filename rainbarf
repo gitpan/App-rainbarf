@@ -8,7 +8,7 @@ use List::Util qw(max sum);
 use Storable qw(lock_retrieve lock_store);
 
 ## no critic (ProhibitBacktickOperators ProhibitComplexRegexes ProhibitInteractiveTest)
-our $VERSION = 0.7;
+our $VERSION = 0.8;
 
 my %rgb = (
     black   => [qw[0 0 0]],
@@ -33,7 +33,9 @@ my ($help, $show_battery, $remaining, $bolt, $chart_bg,
     $chart_fg, $bright, $loadavg, $threshold, $width);
 
 # parse the options file
-my $rcname = qq($ENV{HOME}/.rainbarf.conf);
+my $rcname = exists($ENV{RAINBARF})
+    ? $ENV{RAINBARF}
+    : qq($ENV{HOME}/.rainbarf.conf);
 if (open(my $rcfile, q(<), $rcname)) {
     while (<$rcfile>) {
         s/\#.*$//x;
@@ -264,7 +266,9 @@ sub usage {
                 last;
             }
             close $fh;
-            sleep $i;
+            #sleep $i;
+            ## no critic (ProhibitSleepViaSelect)
+            select(undef, undef, undef, $i / 10);
         }
         return $diff_usage;
     } elsif (top()) {
@@ -403,7 +407,7 @@ rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 =head1 VERSION
 
-version 0.7
+version 0.8
 
 =head1 SYNOPSIS
 
@@ -436,19 +440,47 @@ Just go to L<https://github.com/creaktive/rainbarf> to see some screenshots.
 
 =head2 Installation
 
+=over 4
+
+=item *
+
+Traditional way:
+
  perl Build.PL
  ./Build test
  ./Build install
+
+=item *
+
+L<MacPorts|http://www.macports.org/> way:
+
+ port install rainbarf
+
+=item *
+
+CPAN way:
+
+ cpan -i App::rainbarf
+
+=item *
+
+Modern Perl way:
+
+ cpanm git://github.com/creaktive/rainbarf.git
+
+=back
 
 =head2 Configuration
 
 Add the following line to your F<~/.tmux.conf> file:
 
+ set-option -g status-utf8 on
  set -g status-right '#(rainbarf)'
 
 Or, under I<GNOME Terminal>:
 
- set -g status-right '#(rainbarf --bright)'
+ set-option -g status-utf8 on
+ set -g status-right '#(rainbarf --rgb)'
 
 Reload the tmux config by running C<tmux source-file ~/.tmux.conf>.
 
@@ -463,6 +495,9 @@ C<~/.rainbarf.conf> can be used to persistently store L</OPTIONS>:
  rgb        # 256-colored palette
 
 L</OPTIONS> specified via command line override that values.
+Configuration file can be specified via C<RAINBARF> environment variable:
+
+ RAINBARF=~/.rainbarf.conf rainbarf
 
 =head1 OPTIONS
 
