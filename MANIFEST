@@ -20,3 +20,4 @@ t/release-pod-linkcheck.t
 t/release-pod-syntax.t
 t/release-portability.t
 t/release-test-version.t
+SIGNATURE    Added here by Module::Build

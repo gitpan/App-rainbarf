@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# vim:fenc=utf-8:ft=perl:et:sw=4:ts=4:sts=4:fdm=syntax:fdl=0
+# vim:fenc=utf-8:ft=perl:et:sw=4:ts=4:sts=4
 use 5.008;
 use strict;
 use warnings qw(all);
@@ -8,7 +8,7 @@ use List::Util qw(max sum);
 use Storable qw(lock_retrieve lock_store);
 
 ## no critic (ProhibitBacktickOperators ProhibitComplexRegexes ProhibitInteractiveTest)
-our $VERSION = 0.8;
+our $VERSION = 0.9;
 
 my %rgb = (
     black   => [qw[0 0 0]],
@@ -180,13 +180,29 @@ sub my_color {
         }
         $out = defined($bg) ? qq(#[fg=$fg,bg=$bg]) : qq(#[fg=$fg]);
     } else {
+        my ($old_fg, $old_bg) = ($fg, $bg);
         if ($rgb) {
             $fg = color_rgb($fg => 5);
             $bg = color_rgb($bg => 2);
         } else {
             $fg = qq(bright_$fg) if $bright;
         }
-        $out = Term::ANSIColor::color(defined($bg) ? qq($fg on_$bg) : $fg);
+        my $color = defined($bg) ? qq($fg on_$bg) : $fg;
+        $out = eval { Term::ANSIColor::color($color) };
+        if (not defined $out or $@) {
+            if ($@ =~ /bright/x) {
+                $bright = 0;
+                print STDERR qq(Term::ANSIColor < 3.00 does not support the "bright" attribute!\n);
+                $color =~ s/,?bright_?//x;
+            } elsif ($@ =~ /\brgb\d+\b/x) {
+                $rgb = 0;
+                print STDERR qq(Term::ANSIColor < 4.00 does not support the 256-color palette!\n);
+                $color = qq($old_fg on_$old_bg);
+            } else {
+                die qq(Unknown error: $@\n);
+            }
+            $out = Term::ANSIColor::color($color);
+        }
     }
 
     return $out;
@@ -266,7 +282,6 @@ sub usage {
                 last;
             }
             close $fh;
-            #sleep $i;
             ## no critic (ProhibitSleepViaSelect)
             select(undef, undef, undef, $i / 10);
         }
@@ -290,11 +305,13 @@ sub memory {
         delete $m{u};
     } elsif (open my $meminfo, q{<}, q{/proc/meminfo}) {
         %m = map {
-            /\b(?:Mem)?(Free|Cached|SwapCached|Active|Inactive):\s*(\d+)/ix
+            /\b(?:Mem)?(Free|Cached|SwapCached|Active|Inactive|Total):\s*(\d+)/ix
                 ? (lc chr ord $1 => $2)
                 : ();
         } <$meminfo>;
         $m{c} -= delete $m{s};
+        delete $m{c} if $m{c} < 0;
+        $m{w} = delete($m{t}) - sum values %m;
         close $meminfo;
     } elsif (-x q{/usr/bin/vm_stat}) {
         # fallback
@@ -407,7 +424,7 @@ rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 =head1 VERSION
 
-version 0.8
+version 0.9
 
 =head1 SYNOPSIS
 
@@ -426,7 +443,7 @@ The CPU utilization history chart is tinted with the following colors to reflect
 
 =item * B<blue>: inactive memory;
 
-=item * B<red>: wired memory on I<Mac OS X> / I<FreeBSD>;
+=item * B<red>: wired memory on I<Mac OS X> / I<FreeBSD>; "unaccounted" memory on I<Linux>;
 
 =item * B<cyan>: cached memory on I<Linux>, buf on I<FreeBSD>.
 
@@ -503,63 +520,63 @@ Configuration file can be specified via C<RAINBARF> environment variable:
 
 =over 4
 
-=item --help
+=item C<--help>
 
 This.
 
-=item --[no]battery
+=item C<--[no]battery>
 
 Display the battery charge indicator.
 
-=item --[no]remaining
+=item C<--[no]remaining>
 
 Display the time remaining until the battery is fully charged/empty. See L</CAVEAT>.
 
-=item --[no]bolt
+=item C<--[no]bolt>
 
 Display even fancier battery indicator.
 
-=item --[no]bright
+=item C<--[no]bright>
 
 Tricky one. Disabled by default. See L</CAVEAT>.
 
-=item --[no]rgb
+=item C<--[no]rgb>
 
 Use the B<RGB> palette instead of the system colors.
 Also disabled by default, for the same reasons as above.
 
-=item --fg COLOR_NAME
+=item C<--fg COLOR_NAME>
 
 Force chart foreground color.
 
-=item --bg COLOR_NAME
+=item C<--bg COLOR_NAME>
 
 Force chart background color.
 
-=item --[no]loadavg
+=item C<--[no]loadavg>
 
 Use L<load average|https://en.wikipedia.org/wiki/Load_(computing)> metric instead of CPU utilization.
 You might want to set the C<--max> threshold since this is an absolute value and has varying ranges on different systems.
 
-=item --max NUMBER
+=item C<--max NUMBER>
 
 Maximum C<loadavg> you expect before rescaling the chart. Default is 1.
 
-=item --order INDEXES
+=item C<--order INDEXES>
 
 Specify the memory usage bar order.
 The default is C<fwaic> ( B<f>ree, B<w>ired, B<a>ctive, B<i>nactive & B<c>ached ).
 
-=item --[no]tmux
+=item C<--[no]tmux>
 
 Force C<tmux> colors mode.
 By default, L<rainbarf> detects automatically if it is being called from C<tmux> or from the interactive shell.
 
-=item --screen
+=item C<--screen>
 
 L<screen(1)|http://manpages.ubuntu.com/manpages/hardy/man1/screen.1.html> colors mode. B<Experimental>. See L</CAVEAT>.
 
-=item --width NUMBER
+=item C<--width NUMBER>
 
 Chart width. Default is 38, so both the chart and the battery indicator fit the C<tmux> status line.
 Higher values may require disabling the battery indicator or raising the C<status-right-length> value in F<~/.tmux.conf>.
@@ -576,8 +593,8 @@ If the C<--remaining> option is present but you do not see the time in your stat
 
 If you only see the memory usage bars but no CPU utilization chart, that's because your terminal's color scheme need an explicit distinction between foreground and background colors.
 For instance, "red on red background" will be displayed as a red block on such terminals.
-Thus, you may need the ANSI B<bright> attribute for greater contrast.
-There are two issues with it, though:
+Thus, you may need the ANSI B<bright> attribute for greater contrast, or maybe consider switching to the 256-color palette.
+There are some issues with that, though:
 
 =over 4
 
@@ -585,10 +602,11 @@ There are two issues with it, though:
 
 Other color schemes (notably, L<solarized|http://ethanschoonover.com/solarized>) have different meaning for the ANSI B<bright> attribute.
 So using it will result in a quite psychedelic appearance.
+256-color pallette, activated by the C<--rgb> flag, is unaffected by that.
 
 =item 2.
 
-The older versions of L<Term::ANSIColor> dependency do not recognize it at all, resulting in a confusing error message I<Invalid attribute name bright_yellow at ...>.
+The older versions of L<Term::ANSIColor> dependency do not recognize bright/RGB settings, falling back to the default behavior (plain 16 colors).
 However, the whole L<Term::ANSIColor> is optional, it is only required to preview the effects of the L</OPTIONS> via command line before actually editing the F<~/.tmux.conf>.
 That is, C<rainbarf --bright --tmux> B<is guaranteed to work> despite the outdated L<Term::ANSIColor>!
 
@@ -651,11 +669,19 @@ Stanislaw Pusep <stas@sysd.org>
 
 =item *
 
+L<Chris Knadler|https://github.com/cknadler>
+
+=item *
+
 L<Clemens Hammacher|https://github.com/hammacher>
 
 =item *
 
 L<Joe Hassick|https://github.com/jh3>
+
+=item *
+
+L<Sergey Romanov|https://github.com/sergeyromanov>
 
 =item *
 

@@ -4,7 +4,7 @@
       "Stanislaw Pusep <stas@sysd.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Build version 0.4004, CPAN::Meta::Converter version 2.130880",
+   "generated_by" : "Module::Build version 0.4007, CPAN::Meta::Converter version 2.131560",
    "license" : [
       "perl_5"
    ],
@@ -39,7 +39,7 @@
    "provides" : {
       "App::rainbarf" : {
          "file" : "lib/App/rainbarf.pm",
-         "version" : "0.8"
+         "version" : "0.9"
       }
    },
    "release_status" : "stable",
@@ -52,10 +52,12 @@
          "url" : "git://github.com/creaktive/rainbarf.git"
       }
    },
-   "version" : "0.8",
+   "version" : "0.9",
    "x_contributors" : [
+      "Chris Knadler <takeshi91k@gmail.com>",
       "Clemens Hammacher <hammacher@cs.uni-saarland.de>",
       "Joe Hassick <joe.hassick@gmail.com>",
+      "Sergey Romanov <complefor@rambler.ru>",
       "Tom Cammann <tom.cammann@vmci.net>",
       "Tuomas Jormola <tj@solitudo.net>"
    ]

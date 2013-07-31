@@ -12,6 +12,7 @@ my $build = Module::Build->new(
     license             => 'perl',
     create_license      => 1,
     create_readme       => 1,
+    sign                => 1,
 
     meta_add            => {
         resources       => {
@@ -20,8 +21,10 @@ my $build = Module::Build->new(
             repository  => 'git://github.com/creaktive/rainbarf.git',
         },
         x_contributors  => [
+            'Chris Knadler <takeshi91k@gmail.com>',
             'Clemens Hammacher <hammacher@cs.uni-saarland.de>',
             'Joe Hassick <joe.hassick@gmail.com>',
+            'Sergey Romanov <complefor@rambler.ru>',
             'Tom Cammann <tom.cammann@vmci.net>',
             'Tuomas Jormola <tj@solitudo.net>',
         ],
