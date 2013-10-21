@@ -1,3 +1,4 @@
+#!perl
 
 BEGIN {
   unless ($ENV{RELEASE_TESTING}) {
@@ -6,7 +7,10 @@ BEGIN {
   }
 }
 
-# this test was generated with Dist::Zilla::Plugin::Test::Kwalitee 2.07
-use strict;
-use warnings;
-use Test::Kwalitee;
+
+use Test::More;
+
+eval "use Test::DistManifest";
+plan skip_all => "Test::DistManifest required for testing the manifest"
+  if $@;
+manifest_ok();

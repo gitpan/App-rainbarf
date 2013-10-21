@@ -8,12 +8,9 @@ BEGIN {
 }
 
 
-use strict;
-use warnings;
-
 use Test::More;
 
-eval 'use Test::Portability::Files';
-plan skip_all => 'Test::Portability::Files required for testing portability'
-    if $@;
-run_tests();
+eval "use Test::MinimumVersion";
+plan skip_all => "Test::MinimumVersion required for testing minimum versions"
+  if $@;
+all_minimum_version_from_metayml_ok();

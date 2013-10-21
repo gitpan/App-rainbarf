@@ -1,3 +1,4 @@
+#!perl
 
 BEGIN {
   unless ($ENV{RELEASE_TESTING}) {
@@ -6,7 +7,10 @@ BEGIN {
   }
 }
 
-# this test was generated with Dist::Zilla::Plugin::Test::Kwalitee 2.07
-use strict;
-use warnings;
-use Test::Kwalitee;
+
+use Test::More;
+
+eval "use Test::Vars";
+plan skip_all => "Test::Vars required for testing unused vars"
+  if $@;
+all_vars_ok();

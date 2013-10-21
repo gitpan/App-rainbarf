@@ -2,7 +2,7 @@ NAME
     rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 VERSION
-    version 0.9
+    version 1.0
 
 SYNOPSIS
      rainbarf --tmux --width 40 --no-battery
@@ -23,6 +23,8 @@ DESCRIPTION
         *Linux*;
 
     *   cyan: cached memory on *Linux*, buf on *FreeBSD*.
+
+    *   magenta: used swap memory.
 
     If available, battery charge is displayed on the right.
 
@@ -108,6 +110,10 @@ OPTIONS
         metric instead of CPU utilization. You might want to set the "--max"
         threshold since this is an absolute value and has varying ranges on
         different systems.
+
+    "--[no]swap"
+        Display the swap usage. Used swap amount is added to the total
+        amount, but the free swap amount is not!
 
     "--max NUMBER"
         Maximum "loadavg" you expect before rescaling the chart. Default is
@@ -210,6 +216,8 @@ CONTRIBUTORS
     *   Chris Knadler <https://github.com/cknadler>
 
     *   Clemens Hammacher <https://github.com/hammacher>
+
+    *   Henrik Hodne <https://github.com/henrikhodne>
 
     *   Joe Hassick <https://github.com/jh3>
 

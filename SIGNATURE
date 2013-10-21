@@ -14,36 +14,42 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 66babcabc46116663ea9283ce5610916fac9c9a4 Build.PL
-SHA1 60e481c9c7799c0c7573abbb0474efaef8a81d42 Changes
+SHA1 ddccf584633b384dbc0ee1d8b9a3970a98fba2ad Build.PL
+SHA1 4ff1633ab0ae533505416b11aceacf98fca3f17d Changes
 SHA1 6dfcd65fff78dd076f307d1c5e23356fd51ecbea LICENSE
-SHA1 b18772bbe1ae390bf1244f70c8dd5cb4e9741632 MANIFEST
-SHA1 c6f71f9bbe41c7da914051d1a7094dc66a7f6150 META.json
-SHA1 7c43708b5cf2bcb912ff6267d2473dddf830c00e META.yml
-SHA1 2202203aa5f9ed4adf72df6b1d8acdc40f0f6a5d README
-SHA1 bf985fe19f84762bf3745ca929abe514095f4d75 lib/App/rainbarf.pm
-SHA1 2ffede117058be13a845aafc51df8998b73aa76a rainbarf
+SHA1 a841009e49e199542b44631e23a947c312b1c088 MANIFEST
+SHA1 162375cb096e6089a5a2339b201187484840e94f MANIFEST.SKIP
+SHA1 6a55030a08472a4b5313bc0d98c656fda52a2d14 META.json
+SHA1 cbda831ec60d446b1bc5a9db5b1e5ed1e71b9296 META.yml
+SHA1 2e3ac99e0c9a1b851acfed076b33a3df4ce19a74 README
+SHA1 02be6cc38e37abf9d2b74cc1c470a798ad9b9d52 lib/App/rainbarf.pm
+SHA1 0dd2390fe2ff0de063494fdd893eb5183715e425 perlcritic.rc
+SHA1 529ad63b0f17f5b24a33a5283d48e887b288e997 rainbarf
 SHA1 0d178c35706b9205185a8b42ab2dcb31db598cf6 t/00-compile.t
+SHA1 b751c97b3d8f8b2bbd60d53e114d3062df82f6a8 t/01-tmux.t
 SHA1 fa45d6e6ab1cd421349dea4ef527bfd5cdc8a09e t/author-critic.t
-SHA1 6abeb9902080f3ec6e0ae873f408e8a880b9b36d t/author-test-eol.t
-SHA1 2346c6403f21d316327ee1d2b7857a60c76ef278 t/release-cpan-changes.t
+SHA1 1042e2e8fceb6c37459237642798bd9fda252fe7 t/author-test-eol.t
+SHA1 c019f763f1afade90b7f6f24628af4d8fde358fa t/release-cpan-changes.t
+SHA1 87768d177f8c2e2df9c591cde869e7c8a245555e t/release-dist-manifest.t
 SHA1 bf8570ef6888d79ca6a0c9e21b206b904b0775e2 t/release-distmeta.t
-SHA1 6ea81e3865946a14536f97ccc65fee4b218c8148 t/release-kwalitee.t
+SHA1 3d3e9f1370ee4c83d847fe06b77bae14ac1e131a t/release-kwalitee.t
+SHA1 54ed25287b7e1c9ff328eaf126d438438c8a1d48 t/release-minimum-version.t
 SHA1 54b7f39e355424cbc367105b84ff02a6cb29d93b t/release-mojibake.t
-SHA1 455d1dd1867212a665ad5ea4126b572411de300c t/release-no-tabs.t
+SHA1 459f6d90969b844e019914347262caba2ee49a34 t/release-no-tabs.t
 SHA1 9433c240fe590bc404ab68ff63984df763e347ed t/release-pod-coverage.t
 SHA1 4f2933df3566db6f337817aa885889deb213960b t/release-pod-linkcheck.t
 SHA1 b30cbdfaf935017c4568c0c91b242438cb87786e t/release-pod-syntax.t
-SHA1 8d931d5c7b6fc03e39a744d59522e4b7077562a1 t/release-portability.t
+SHA1 bf4fdda27bd4e8ec177c38cca43083317494cba8 t/release-portability.t
 SHA1 b3350d3d17bb2fa4e23075ec8d786505cc565539 t/release-test-version.t
+SHA1 d7221447937ab93002a123801def7be09748c106 t/release-unused-vars.t
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.13 (Darwin)
+Version: GnuPG v1.4.14 (Darwin)
 
-iQEcBAEBAgAGBQJR+S/uAAoJEDlxU7ZVUpmiwaYH/1603cH4Z/Vu52Jkzhc5QcW5
-ygyw9HEwT8GO+APyUhkEnvUk5WNZpn3LXPHfkiLB/Pl1iEw0SZBlnS3XLPfKGbJ8
-HqG+XTwzAdmAh/CPR2E0ZADnBv73Frug6wbmszqH4aGhy40APx/6Wn3knlgK/JFO
-Ec1E64/wQMjWMB/tFHNqxxn2JTdl4i/IUPGzaQ0gfhdpkerP0kWO1dm1CqV77N67
-KB0adXyZz7KU3aA//K5vAWAfiuJauKCqk/sxxGrDtl+ElsdncKlPtLVnIIZ3nsiV
-4cw9d/tCa8QSOreqZxX9tV28TdiYepgoW84RbO8Ig54M94n7At5bJLPFFLxVxgk=
-=fI+t
+iQEcBAEBAgAGBQJSZPzdAAoJEDlxU7ZVUpmie2sIAIRmNmoIacAkPWVtyCCES88+
+Qd45f8nIMg8gec2vJWTethTHLDVhVFCqX3JbF+wSwtr5t9+HCbYtFgeSTT19DO5P
+JoUGZVOj5XIyCAdfdbnrtKyD4xaw0+wvaS1wcqtZwl0rPf9bolC6rTUxn5hevrQ4
+la2KbKAq/ShjoDTiT5/SLNPQMPgnTo8yER4EPQaTtxM6qQ6ENh1UEjoSWW7r5OhN
+pTfkqBvk8l/BluCZYyf4xverfsRWHrb/9FEvKBRJlu+6kDrFnC0roicJ8TlVWgJa
+hnwaE+ymy+XKmoC45urXyWSkKDbY1heYESOxkeWE+kZMfKlHuk4aW6BviFshs7A=
+=HLkT
 -----END PGP SIGNATURE-----
