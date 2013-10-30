@@ -1,5 +1,6 @@
 #!perl
 use strict;
+use open IO => ':locale';
 use warnings qw(all);
 
 use File::Temp;
@@ -11,14 +12,14 @@ plan skip_all => qq(The platform $^O is unsupported)
 my $tmp = File::Temp->newdir;
 
 local $ENV{RAINBARF} = q(/dev/null);
-local $ENV{HOME} = $tmp->dirname;
+my $file = $tmp->dirname . '/rainbarf.dat';
 
 my $n = 10;
 
 my $color_set = qr{
     \#\[
-        fg=\w+
-        (?:,bg=\w+)?
+        fg=(\w+)
+        (?:,bg=\1)?
     \]
 }x;
 my $color_reset = qr{
@@ -40,7 +41,8 @@ for my $i (1 .. $n) {
                     --nobattery
                     --swap
                     --tmux
-            ]),
+                    --datfile
+            ], $file),
         qq(pipe $i),
     );
     chomp(my $line = <$out>);
@@ -52,7 +54,7 @@ for my $i (1 .. $n) {
             (?:
                 $color_set
                 $chart
-            ) {2,6}
+            ) {2,}
             $color_reset
             $
         }msx,

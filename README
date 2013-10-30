@@ -2,7 +2,7 @@ NAME
     rainbarf - CPU/RAM/battery stats chart bar for tmux (and GNU screen)
 
 VERSION
-    version 1.0
+    version 1.1
 
 SYNOPSIS
      rainbarf --tmux --width 40 --no-battery
@@ -83,14 +83,14 @@ OPTIONS
         This.
 
     "--[no]battery"
-        Display the battery charge indicator.
+        Display the battery charge indicator. Enabled by default.
 
     "--[no]remaining"
         Display the time remaining until the battery is fully charged/empty.
-        See "CAVEAT".
+        See "CAVEAT". Disabled by default.
 
     "--[no]bolt"
-        Display even fancier battery indicator.
+        Display even fancier battery indicator. Disabled by default.
 
     "--[no]bright"
         Tricky one. Disabled by default. See "CAVEAT".
@@ -109,11 +109,11 @@ OPTIONS
         Use load average <https://en.wikipedia.org/wiki/Load_(computing)>
         metric instead of CPU utilization. You might want to set the "--max"
         threshold since this is an absolute value and has varying ranges on
-        different systems.
+        different systems. Disabled by default.
 
     "--[no]swap"
         Display the swap usage. Used swap amount is added to the total
-        amount, but the free swap amount is not!
+        amount, but the free swap amount is not! Disabled by default.
 
     "--max NUMBER"
         Maximum "loadavg" you expect before rescaling the chart. Default is
@@ -137,6 +137,9 @@ OPTIONS
         indicator fit the "tmux" status line. Higher values may require
         disabling the battery indicator or raising the "status-right-length"
         value in ~/.tmux.conf.
+
+    "--datfile FILENAME"
+        Specify the file to log CPU stats to. Default: $HOME/.rainbarf.dat
 
 CAVEAT
   Time remaining
@@ -220,6 +223,8 @@ CONTRIBUTORS
     *   Henrik Hodne <https://github.com/henrikhodne>
 
     *   Joe Hassick <https://github.com/jh3>
+
+    *   Josh Matthews <https://github.com/jmatth>
 
     *   Sergey Romanov <https://github.com/sergeyromanov>
 
